@@ -4,21 +4,82 @@ import type { CSSProperties } from "react";
 import type { ListState } from "../types";
 
 function shell(state: ListState): CSSProperties {
-  return { width: state.width, minHeight: state.height, padding: state.padding, gap: state.gap, borderRadius: state.radius, border: `${state.borderWidth}px solid ${state.border}`, boxShadow: `0 ${Math.round(state.shadow / 3)}px ${state.shadow}px rgba(0,0,0,.28)`, background: state.background, color: state.foreground, fontFamily: state.fontFamily, opacity: state.disabled ? 0.55 : 1 };
+  return {
+    width: state.width,
+    minHeight: state.height,
+    padding: state.padding,
+    borderRadius: state.radius,
+    border: `${state.borderWidth}px solid ${state.border}`,
+    boxShadow: `0 ${Math.round(state.shadow / 3)}px ${state.shadow}px rgba(0,0,0,.28)`,
+    background: state.background,
+    color: state.foreground,
+    fontFamily: state.fontFamily,
+    opacity: state.disabled ? 0.6 : 1,
+  };
+}
+
+function itemStatus(state: ListState, selected: boolean) {
+  if (selected) return "Selected";
+  if (state.previewState === "error") return "Needs review";
+  if (state.previewState === "success") return "Complete";
+  if (state.previewState === "loading") return "Syncing";
+  return "Ready";
 }
 
 export default function LivePreview({ state }: { state: ListState }) {
-  const model = state as Record<string, unknown>;
-  const numberValue = (key: string, fallback: number) => typeof model[key] === "number" ? model[key] : fallback;
-  const stringValue = (key: string, fallback: string) => typeof model[key] === "string" ? model[key] : fallback;
-  const boolValue = (key: string) => typeof model[key] === "boolean" ? model[key] : false;
-  const count = numberValue("itemCount", numberValue("rowCount", numberValue("slideCount", numberValue("imageCount", numberValue("filterCount", numberValue("controlCount", 5))))));
-  const items = Array.from({ length: count }, (_, index) => index + 1);
-  const badge = (text: string) => <span className="rounded-full border px-3 py-1 text-xs" style={{ borderColor: state.border, color: state.accent }}>{text}</span>;
+  const itemTotal = state.emptyState ? 0 : Math.max(state.itemCount, 1);
+  const items = Array.from({ length: itemTotal }, (_, index) => index);
+  const selectedIndex = Math.min(Math.max(state.selectedIndex, 0), Math.max(itemTotal - 1, 0));
+  const ListTag = state.listMode === "ordered" ? "ol" : "ul";
+  const listRole = state.listMode === "menu" || state.listMode === "listbox" ? state.listMode : undefined;
+  const itemRole = state.listMode === "menu" ? "menuitem" : state.listMode === "listbox" ? "option" : undefined;
   const panel = shell(state);
-  if ("chartType" in model) return <section role="img" aria-label={state.ariaLabel} style={panel} className="grid content-center"><h3 style={{ fontSize: state.titleSize }}>{state.title}</h3><div className="flex items-end gap-3">{items.map((item) => <div key={item} className="w-10 rounded-t-xl" style={{ height: 36 + item * 18, background: state.accent }} />)}</div></section>;
-  if ("src" in model && ("showTimeline" in model || "showCaptions" in model)) return <section role={state.role} aria-label={state.ariaLabel} style={panel} className="grid content-center"><h3>{state.title}</h3>{"showTimeline" in model ? <audio controls muted={boolValue("muted")} loop={boolValue("loop")} preload={stringValue("preload", "metadata")} className="w-full" /> : <video controls muted={boolValue("muted")} loop={boolValue("loop")} preload={stringValue("preload", "metadata")} poster={stringValue("poster", "")} className="w-full rounded-xl bg-black/40" />}</section>;
-  if (state.role === "dialog") return <div className="grid place-items-center"><section role="dialog" aria-label={state.ariaLabel} style={panel} className="grid"><h3 style={{ fontSize: state.titleSize }}>{state.title}</h3><p style={{ color: stringValue("muted", "#94a3b8") }}>{state.description}</p><div className="flex gap-2"><button type="button" className="rounded-xl px-4 py-2" style={{ background: state.accent, color: "#020617" }}>Action</button><button type="button" className="rounded-xl border px-4 py-2" style={{ borderColor: state.border }}>Cancel</button></div></section></div>;
-  if (state.role === "table") return <table role="table" aria-label={state.ariaLabel} style={panel}><caption>{stringValue("caption", state.title)}</caption><tbody>{items.map((item) => <tr key={item}><th className="p-2 text-left">Row {item}</th><td className="p-2">{state.label}</td></tr>)}</tbody></table>;
-  return <section id={state.id} role={state.role} aria-label={state.ariaLabel} tabIndex={state.tabIndex} style={panel} className="grid content-center"><h3 style={{ fontSize: state.titleSize, fontWeight: state.fontWeight }}>{state.title}</h3><p style={{ color: stringValue("muted", "#94a3b8"), fontSize: state.bodySize }}>{state.description}</p><div className="flex flex-wrap gap-2">{items.map((item) => badge(`${state.label} ${item}`))}</div><p className="text-xs" style={{ color: stringValue("muted", "#94a3b8") }}>{state.helper} · {stringValue("previewState", "default")}</p></section>;
+
+  return (
+    <section
+      id={state.id}
+      aria-labelledby={`${state.id}-title`}
+      aria-describedby={`${state.id}-description ${state.id}-count`}
+      tabIndex={state.tabIndex}
+      style={panel}
+      data-component="list"
+      data-preview-state={state.previewState}
+    >
+      <div className="mb-4">
+        <h3 id={`${state.id}-title`} style={{ fontSize: state.titleSize, fontWeight: state.fontWeight }}>{state.title}</h3>
+        <p id={`${state.id}-description`} style={{ color: state.muted, fontSize: state.bodySize }}>{state.description}</p>
+        <p id={`${state.id}-count`} className="mt-2 text-xs" style={{ color: state.muted }}>
+          {itemTotal} {itemTotal === 1 ? "item" : "items"} in this {state.listMode} list.
+        </p>
+      </div>
+      {state.emptyState ? (
+        <p role="status" className="rounded-2xl border p-4 text-sm" style={{ borderColor: state.border, color: state.muted }}>
+          {state.helper}
+        </p>
+      ) : (
+        <ListTag role={listRole} aria-label={`${state.ariaLabel}: ${itemTotal} items`} className="grid list-none p-0" style={{ gap: state.gap }}>
+          {items.map((index) => {
+            const selected = index === selectedIndex;
+            const status = itemStatus(state, selected);
+            return (
+              <li key={index} role={itemRole} aria-selected={state.listMode === "listbox" ? selected : undefined} aria-disabled={state.disabled || undefined} className="flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: selected ? state.accent : state.showDividers ? state.border : "transparent", background: selected ? `color-mix(in oklab, ${state.accent} 18%, transparent)` : "transparent" }}>
+                {state.showAvatars && (
+                  <span aria-hidden="true" className="grid size-10 place-items-center rounded-full text-sm font-bold" style={{ background: selected ? state.accent : state.border, color: selected ? state.background : state.foreground }}>
+                    {index + 1}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold">{state.label} {index + 1}</span>
+                  <span className="block truncate text-sm" style={{ color: state.muted }}>{state.helper}</span>
+                </span>
+                <span className="rounded-full border px-2 py-1 text-xs" style={{ borderColor: selected ? state.accent : state.border, color: selected ? state.accent : state.muted }}>
+                  {status}
+                </span>
+              </li>
+            );
+          })}
+        </ListTag>
+      )}
+    </section>
+  );
 }
