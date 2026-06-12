@@ -15,6 +15,7 @@ function shell(state: ListState): CSSProperties {
     color: state.foreground,
     fontFamily: state.fontFamily,
     opacity: state.disabled ? 0.6 : 1,
+    transition: state.motion ? "opacity 200ms ease" : "none",
   };
 }
 
@@ -62,7 +63,7 @@ export default function LivePreview({ state }: { state: ListState }) {
             const selected = index === selectedIndex;
             const status = itemStatus(state, selected);
             return (
-              <li key={index} role={itemRole} aria-selected={state.listMode === "listbox" ? selected : undefined} aria-disabled={state.disabled || undefined} className="flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: selected ? state.accent : state.showDividers ? state.border : "transparent", background: selected ? `color-mix(in oklab, ${state.accent} 18%, transparent)` : "transparent" }}>
+              <li key={index} role={itemRole} aria-selected={state.listMode === "listbox" ? selected : undefined} aria-disabled={state.disabled || undefined} className="flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: selected ? state.accent : state.showDividers ? state.border : "transparent", background: selected ? `color-mix(in oklab, ${state.accent} 18%, transparent)` : "transparent", transition: state.motion ? "background 200ms ease, border-color 200ms ease" : "none" }}>
                 {state.showAvatars && (
                   <span aria-hidden="true" className="grid size-10 place-items-center rounded-full text-sm font-bold" style={{ background: selected ? state.accent : state.border, color: selected ? state.background : state.foreground }}>
                     {index + 1}
