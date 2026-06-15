@@ -7,5 +7,15 @@ import type { ListState } from "../types";
 type Props = { state: ListState; update: <K extends keyof ListState>(key: K, value: ListState[K]) => void };
 
 export default function BehaviorSection({ state, update }: Props) {
-  return <SectionCard title="Behavior" subtitle="Behavior controls for native list generation."><Switch label="Disabled" checked={state.disabled} onChange={(value) => update("disabled", value)} /></SectionCard>;
+  return (
+    <div className="space-y-4">
+      <SectionCard title="Items" subtitle="Visual treatment of list items.">
+        <Switch label="Show avatars" checked={state.showAvatars} onChange={(value) => update("showAvatars", value)} />
+        <Switch label="Show dividers" checked={state.showDividers} onChange={(value) => update("showDividers", value)} />
+      </SectionCard>
+      <SectionCard title="State" subtitle="Interactive state of the list.">
+        <Switch label="Disabled" checked={state.disabled} onChange={(value) => update("disabled", value)} />
+      </SectionCard>
+    </div>
+  );
 }

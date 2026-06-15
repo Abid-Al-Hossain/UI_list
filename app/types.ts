@@ -1,4 +1,4 @@
-export type SectionId = "presets" | "basics" | "metadata" | "content" | "items" | "behavior" | "layout" | "placement" | "sizing" | "colors" | "border" | "radius" | "shadow" | "typography" | "transitions" | "focus-ring" | "states" | "accessibility";
+export type SectionId = "presets" | "basics" | "metadata" | "content" | "items" | "behavior" | "layout" | "placement" | "sizing" | "colors" | "border" | "radius" | "shadow" | "typography" | "transitions" | "focus-ring" | "states" | "disabled" | "accessibility";
 
 export type ListState = {
   title: string;
@@ -54,11 +54,18 @@ export type ListState = {
   muted: string;
   accent: string;
   border: string;
+  itemActiveBg: string;
   titleSize: number;
   bodySize: number;
   fontWeight: number;
   previewState: "default" | "hover" | "focus" | "active" | "open" | "closed" | "selected" | "loading" | "empty" | "error" | "success";
   disabled: boolean;
+  disabledOpacity: number;
+  disabledCursor: "not-allowed" | "default" | "pointer";
+  disabledUseCustomColors: boolean;
+  disabledBg: string;
+  disabledText: string;
+  disabledBorder: string;
   role: "list";
   itemCount: number;
   listMode: "unordered" | "ordered" | "menu" | "listbox";
@@ -66,6 +73,31 @@ export type ListState = {
   showAvatars: boolean;
   showDividers: boolean;
   emptyState: boolean;
+  // Item colors & states
+  itemBg: string;
+  itemText: string;
+  itemHoverBg: string;
+  itemHoverText: string;
+  itemSelectedText: string;
+  itemSelectedBorder: string;
+  itemDisabledColor: string;
+  // Item geometry
+  itemHeight: number;
+  itemPadding: number;
+  itemRadius: number;
+  // Dividers & secondary text
+  dividerColor: string;
+  dividerStyle: "solid" | "dashed" | "dotted";
+  secondaryTextColor: string;
+  secondaryTextSize: number;
+  // Badge
+  badgeBg: string;
+  badgeText: string;
+  badgeBorder: string;
+  badgeRadius: number;
+  // Avatar / leading icon
+  avatarSize: number;
+  leadingIconColor: string;
 };
 
 export type StudioPreset = { id: string; family: string; archetype: string; variant: string; size: string; tags: string[]; state: Partial<ListState> & Record<string, unknown> };
@@ -138,6 +170,10 @@ export const SECTIONS: Array<{ id: SectionId; label: string }> = [
   {
     "id": "states",
     "label": "State Preview"
+  },
+  {
+    "id": "disabled",
+    "label": "Disabled"
   },
   {
     "id": "accessibility",

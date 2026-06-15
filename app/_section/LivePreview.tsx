@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { ListState } from "../types";
 import { SYSTEM_FONTS } from "@/components/shared/typography/fontConstants";
 
@@ -28,9 +28,9 @@ function shell(state: ListState): CSSProperties {
     minHeight: state.height,
     padding: state.padding,
     borderRadius: buildRadius(state),
-    border: `${state.borderWidth}px ${state.borderStyle} ${state.border}`,
+    border: `${state.borderWidth}px ${state.borderStyle} ${state.disabled && state.disabledUseCustomColors ? state.disabledBorder : state.border}`,
     boxShadow: buildShadow(state),
-    background: state.background,
+    background: state.disabled && state.disabledUseCustomColors ? state.disabledBg : state.background,
     color: state.foreground,
     fontFamily: resolveFont(state),
     fontStyle: state.fontStyle,
@@ -59,6 +59,7 @@ export default function LivePreview({ state }: { state: ListState }) {
   const listRole = state.listMode === "menu" || state.listMode === "listbox" ? state.listMode : undefined;
   const itemRole = state.listMode === "menu" ? "menuitem" : state.listMode === "listbox" ? "option" : undefined;
   const panel = shell(state);
+  const [hoverIndex, setHoverIndex] = useState(-1);
 
   return (
     <section
@@ -85,19 +86,32 @@ export default function LivePreview({ state }: { state: ListState }) {
         <ListTag role={listRole} aria-label={`${state.ariaLabel}: ${itemTotal} items`} className="grid list-none p-0" style={{ gap: state.gap }}>
           {items.map((index) => {
             const selected = index === selectedIndex;
+            const hovered = hoverIndex === index && !selected && !state.disabled;
             const status = itemStatus(state, selected);
+            const itemBackground = selected ? state.itemActiveBg : hovered ? state.itemHoverBg : state.itemBg;
+            const itemColor = state.disabled ? state.itemDisabledColor : selected ? state.itemSelectedText : hovered ? state.itemHoverText : state.itemText;
+            const itemBorderColor = selected ? state.itemSelectedBorder : state.showDividers ? state.dividerColor : "transparent";
             return (
-              <li key={index} role={itemRole} aria-selected={state.listMode === "listbox" ? selected : undefined} aria-disabled={state.disabled || undefined} className="flex items-center gap-3 rounded-2xl border p-3" style={{ borderColor: selected ? state.accent : state.showDividers ? state.border : "transparent", background: selected ? `color-mix(in oklab, ${state.accent} 18%, transparent)` : "transparent", transition: state.transitionDuration > 0 ? "background 200ms ease, border-color 200ms ease" : "none" }}>
+              <li
+                key={index}
+                role={itemRole}
+                aria-selected={state.listMode === "listbox" ? selected : undefined}
+                aria-disabled={state.disabled || undefined}
+                onMouseEnter={() => setHoverIndex(index)}
+                onMouseLeave={() => setHoverIndex(-1)}
+                className="flex items-center gap-3"
+                style={{ minHeight: state.itemHeight, padding: state.itemPadding, borderRadius: state.itemRadius, border: `${state.borderWidth}px ${state.dividerStyle} ${itemBorderColor}`, background: itemBackground, color: itemColor, transition: state.transitionDuration > 0 ? "background 200ms ease, border-color 200ms ease, color 200ms ease" : "none" }}
+              >
                 {state.showAvatars && (
-                  <span aria-hidden="true" className="grid size-10 place-items-center rounded-full text-sm font-bold" style={{ background: selected ? state.accent : state.border, color: selected ? state.background : state.foreground }}>
+                  <span aria-hidden="true" className="grid place-items-center rounded-full text-sm font-bold" style={{ width: state.avatarSize, height: state.avatarSize, background: selected ? state.accent : state.border, color: state.leadingIconColor }}>
                     {index + 1}
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{state.label} {index + 1}</span>
-                  <span className="block truncate text-sm" style={{ color: state.muted }}>{state.helper}</span>
+                  <span className="block truncate" style={{ color: state.secondaryTextColor, fontSize: state.secondaryTextSize }}>{state.helper}</span>
                 </span>
-                <span className="rounded-full border px-2 py-1 text-xs" style={{ borderColor: selected ? state.accent : state.border, color: selected ? state.accent : state.muted }}>
+                <span className="border px-2 py-1 text-xs" style={{ borderRadius: state.badgeRadius, borderColor: state.badgeBorder, background: state.badgeBg, color: state.badgeText }}>
                   {status}
                 </span>
               </li>
