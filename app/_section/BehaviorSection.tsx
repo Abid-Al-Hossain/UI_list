@@ -10,9 +10,11 @@ export default function BehaviorSection({ state, update }: Props) {
   return (
     <div className="space-y-4">
       <SectionCard title="Items" subtitle="Visual treatment of list items.">
+      <div className="space-y-4">
         <Switch label="Show avatars" checked={state.showAvatars} onChange={(value) => update("showAvatars", value)} />
         <Switch label="Show dividers" checked={state.showDividers} onChange={(value) => update("showDividers", value)} />
-      </SectionCard>
+      </div>
+    </SectionCard>
       <SectionCard title="State" subtitle="Interactive state of the list.">
         <Switch label="Disabled" checked={state.disabled} onChange={(value) => update("disabled", value)} />
       </SectionCard>
